@@ -1,0 +1,151 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="carriers" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="envioskanguro" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Envios Kanguro</label>
+                <field id="version_no" type="note" translate="label" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Version</label>
+                    <frontend_model>Envioskanguro\Shipping\Block\Adminhtml\System\Config\Form\Field\Version</frontend_model>
+                </field>
+                <field id="active" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="environment" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Environment</label>
+                    <source_model>Envioskanguro\Shipping\Model\Config\Backend\Environment</source_model>
+                </field>
+                <field id="token" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>API Token</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                    <comment><![CDATA[Contact to <strong>EnviosKanguro</strong> for get token.]]></comment>
+                </field>
+                <field id="mode" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Mode</label>
+                    <source_model>Envioskanguro\Shipping\Model\Config\Backend\Mode</source_model>
+                </field>
+                <field id="free_from" translate="label" type="text" sortOrder="41" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Free From</label>
+                    <comment><![CDATA[free shipping from.]]></comment>
+                    <depends>
+                        <field id="carriers/envioskanguro/mode">Threshold</field>
+                    </depends>
+                </field>
+                <field id="title" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Title</label>
+                    <comment><![CDATA[Shipping title.]]></comment>
+                </field>
+                <field id="name" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Method Name</label>
+                </field>
+                <field id="price" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Price</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                </field>
+                <field id="specificerrmsg" translate="label" type="textarea" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Displayed Error Message</label>
+                </field>
+                <field id="sallowspecific" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Ship to Applicable Countries</label>
+                    <frontend_class>shipping-applicable-country</frontend_class>
+                    <source_model>Magento\Shipping\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Ship to Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                    <can_be_empty>1</can_be_empty>
+                </field>
+                <field id="showmethod" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show Method if Not Applicable</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <frontend_class>shipping-skip-hide</frontend_class>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                </field>
+                <field id="logging_enabled" translate="label comment" type="select" sortOrder="150" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable API Logging</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Log all API communication. If set to <em>No</em>, only API errors will be logged.]]></comment>
+                </field>
+                <field id="source_address" type="note" translate="label" sortOrder="290" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Source Address</label>
+                    <frontend_model>Envioskanguro\Shipping\Block\Adminhtml\System\Config\Form\Field\Origin</frontend_model>
+                </field>
+                <field id="origin_address_name" translate="label comment" type="text" sortOrder="300" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Name</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                    <validate>required-entry</validate>
+                </field>
+                <field id="origin_address_email" translate="label comment" type="text" sortOrder="310" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Email</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                    <validate>required-entry</validate>
+                </field>
+                <field id="origin_address_home_phone" translate="label comment" type="text" sortOrder="320" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Home Phone</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                    <validate>required-entry</validate>
+                </field>
+                <field id="origin_address_cell_phone" translate="label comment" type="text" sortOrder="330" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Movil phone</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+                <field id="origin_address_street" translate="label comment" type="text" sortOrder="340" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Street</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+                <field id="origin_address_street_number" translate="label comment" type="text" sortOrder="350" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Street Number</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+                <field id="origin_address_colony" translate="label comment" type="text" sortOrder="360" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Colony</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+                <field id="origin_address_city" translate="label comment" type="text" sortOrder="370" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>City</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+                <field id="origin_address_state" translate="label comment" type="text" sortOrder="380" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>State/Province</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+                <field id="origin_address_zip" translate="label comment" type="text" sortOrder="390" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Zip</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                    <validate>required-entry validate-number</validate>
+                </field>
+                <field id="origin_address_references_1" translate="label comment" type="text" sortOrder="400" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>References</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+                <field id="origin_address_notes" translate="label comment" type="text" sortOrder="410" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Notes</label>
+                    <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
+                </field>
+
+                <field id="product" type="note" translate="label" sortOrder="500" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Product</label>
+                    <frontend_model>Envioskanguro\Shipping\Block\Adminhtml\System\Config\Form\Field\Origin</frontend_model>
+                </field>
+                <field id="length" translate="label comment" type="select" sortOrder="510" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Length</label>
+                    <source_model>Envioskanguro\Shipping\Model\Config\Backend\Attributes</source_model>
+                    <comment><![CDATA[Leave default values for empty, <strong>Default (0)</strong>]]></comment>
+                </field>
+                <field id="width" translate="label comment" type="select" sortOrder="520" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Width</label>
+                    <source_model>Envioskanguro\Shipping\Model\Config\Backend\Attributes</source_model>
+                    <comment><![CDATA[Leave default values for empty, <strong>Default (0)</strong>]]></comment>
+                </field>
+                <field id="height" translate="label comment" type="select" sortOrder="530" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Height</label>
+                    <source_model>Envioskanguro\Shipping\Model\Config\Backend\Attributes</source_model>
+                    <comment><![CDATA[Leave default values for empty, <strong>Default (0)</strong>]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
