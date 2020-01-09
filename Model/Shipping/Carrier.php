@@ -78,12 +78,8 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 		$methods = [];
 		$rates = $this->quotingDataInitializer->getAvailableRates();
 
-		$this->_logger->info(
-			__METHOD__ . ' | ', $rates
-		);
-
 		foreach ($rates as $rate) {
-			$methods[$rate['code']] = $rate['name'];
+			$methods[$rate['code'] . "_" . $rate['rate_id']] = $rate['name'];
 		}
 
 		return $methods;
@@ -126,7 +122,7 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 			$method->setCarrier($this->_code);
 			$method->setCarrierTitle($this->getConfigData('title'));
 
-			$method->setMethod($rate['code']);
+			$method->setMethod($rate['code'] . "_" . $rate['rate_id']);
 			$method->setMethodTitle($rate['name']);
 
 			$amount = !is_null($rate['custom_price']) ? $rate['custom_price'] : $rate['original_price'];
