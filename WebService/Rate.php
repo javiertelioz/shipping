@@ -49,7 +49,9 @@ class Rate implements RateInterface
         $this->mode = $mode;
 
         $token = $this->scopeConfig->getValue('carriers/envioskanguro/token');
-        $this->client = new Api($token, 'development');
+        $environment = $this->scopeConfig->getValue('carriers/envioskanguro/environment');
+        
+        $this->client = new Api($token, $environment);
     }
 
     /**
