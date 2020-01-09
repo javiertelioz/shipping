@@ -39,10 +39,16 @@ class Rate implements RateInterface
      */
     protected $mode;
 
+    /**
+     * @var Registry
+     */
+    protected $_registry;
+
     public function __construct(
         LoggerInterface $logger,
         ScopeConfigInterface $scopeConfig,
-        Mode $mode
+        Mode $mode,
+        \Magento\Framework\Registry $registry,
     ) {
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
@@ -52,6 +58,8 @@ class Rate implements RateInterface
         $environment = $this->scopeConfig->getValue('carriers/envioskanguro/environment');
         
         $this->client = new Api($token, $environment);
+
+        $this->registry = $registry;
     }
 
     /**
@@ -63,7 +71,16 @@ class Rate implements RateInterface
      */
     public function getRates($quotingData): array
     {
-        $rates = $this->client->post('rate', $quotingData);
+        $zip = $quotingData['destination']['zip'];
+        $regiter_zip = $this->_registry->registry('current_zip');
+
+        if(!empty($zip) && $zip == $regiter_zip ){
+            $rates = $this->_registry->registry('Rates');
+        } else {
+            $rates = $this->client->post('rate', $quotingData);
+            $this->registry->register($rates, 'Rates');
+            $this->registry->register($quotingData['destination']['zip'], 'current_zip');
+        }
         
         // $this->logger->debug(var_export($rates['body']->data, true));
 
