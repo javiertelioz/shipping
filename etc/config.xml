@@ -13,10 +13,11 @@
             <envioskanguro>
                 <active>1</active>
                 <environment>development</environment>
-                <mode>Standard</mode>
+                <mode>Threshold</mode>
                 <title>Envios Kanguro</title>
                 <sallowspecific>0</sallowspecific>
                 <name>Envios Kanguro</name>
+                <free_from>50.00</free_from>
                 <price>89.00</price>
                 <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
                 <showmethod>0</showmethod>

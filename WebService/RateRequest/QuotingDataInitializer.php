@@ -9,35 +9,29 @@
 
 namespace Envioskanguro\Shipping\WebService\RateRequest;
 
-
-use Psr\Log\LogLevel;
 use Psr\Log\LoggerInterface;
 
 use Envioskanguro\Shipping\WebService\Rate;
-
 use Envioskanguro\Shipping\WebService\RateRequest\Extractor;
 
-use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Framework\Exception\LocalizedException;
-
-// use Temando\Shipping\Model\OrderInterfaceBuilder;
 
 class QuotingDataInitializer
 {
     /**
      * @var Extractor
      */
-    private $rateRequestExtractor;
+    protected $rateRequestExtractor;
 
     /** 
      * @var Rate Service
      */
-    private $rateService;
+    protected $rateService;
 
     /** 
-     * Log
+     * @var LoggerInterface
      */
-    protected $_logger;
+    protected $logger;
 
     /**
      * QuotingDataInitializer constructor.
@@ -45,13 +39,13 @@ class QuotingDataInitializer
      * @param OrderInterfaceBuilder $orderBuilder
      */
     public function __construct(
-        Rate $rateService,
         LoggerInterface $logger,
+        Rate $rateService,
         Extractor $rateRequestExtractor
     ) {
+        $this->logger = $logger;
         $this->rateService = $rateService;
         $this->rateRequestExtractor = $rateRequestExtractor;
-        $this->_logger = $logger;
     }
 
     /**
@@ -62,14 +56,13 @@ class QuotingDataInitializer
      * - dynamic checkout fields,
      * - delivery location selected during checkout.
      *
-     * @param RateRequest $rateRequest
      * @throws LocalizedException
      */
-    public function getAvailableRates(RateRequest $rateRequest)
+    public function getAvailableRates()
     {
-        $quoting = $this->rateRequestExtractor->getQuotingData($rateRequest);
-        
-        return $this->rateService->getRates($quoting);
+        $quoting = $this->rateRequestExtractor->getQuotingData();
 
+        return $this->rateService->getRates($quoting);
     }
+
 }

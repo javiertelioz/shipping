@@ -3,8 +3,8 @@
 /**
  * Envios Kanguro Shipping
  *
- * @license    http://www.opensource.org/licenses/mit-license.html MIT License
- * @author     Javier Telio Z <jtelio118@gmail.com>
+ * @license http://www.opensource.org/licenses/mit-license.html MIT License
+ * @author Javier Telio Z <jtelio118@gmail.com>
  */
 
 namespace Envioskanguro\Shipping\Model\Shipping;
@@ -12,27 +12,19 @@ namespace Envioskanguro\Shipping\Model\Shipping;
 use Psr\Log\LogLevel;
 use Psr\Log\LoggerInterface;
 
-use EnviosKanguro\Api;
-use Envioskanguro\Shipping\WebService\Rate;
-
 use Magento\Shipping\Model\Rate\Result;
 use Magento\Shipping\Model\Rate\ResultFactory;
-use Magento\Framework\Message\ManagerInterface;
-use Magento\Sales\Api\Data\ShipmentTrackInterface;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Shipping\Model\Carrier\AbstractCarrier;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Shipping\Model\Tracking\Result\StatusFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
 
 use Envioskanguro\Shipping\WebService\RateRequest\QuotingDataInitializer;
 
-class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
-    \Magento\Shipping\Model\Carrier\CarrierInterface
+class Carrier extends AbstractCarrier implements CarrierInterface
 {
     /**
      * @var string
@@ -40,12 +32,12 @@ class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
     protected $_code = 'envioskanguro';
 
     /**
-     * @var \Magento\Shipping\Model\Rate\ResultFactory
+     * @var ResultFactory
      */
     protected $_rateResultFactory;
 
     /**
-     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory
+     * @var MethodFactory
      */
     protected $_rateMethodFactory;
 
@@ -58,22 +50,22 @@ class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
     /**
      * Shipping constructor.
      *
-     * @param QuotingDataInitializer                                      $quotingDataInitializer
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface          $scopeConfig
-     * @param \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory  $rateErrorFactory
-     * @param \Psr\Log\LoggerInterface                                    $logger
-     * @param \Magento\Shipping\Model\Rate\ResultFactory                  $rateResultFactory
-     * @param \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory
-     * @param array                                                       $data
+     * @param QuotingDataInitializer $quotingDataInitializer
+     * @param ScopeConfigInterface $scopeConfig
+     * @param ErrorFactory $rateErrorFactory
+     * @param LoggerInterface $logger
+     * @param ResultFactory $rateResultFactory
+     * @param MethodFactory $rateMethodFactory
+     * @param array $data
      * 
      */
     public function __construct(
         QuotingDataInitializer $quotingDataInitializer,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
-        \Psr\Log\LoggerInterface $logger,
-        \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory,
-        \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
+        ScopeConfigInterface $scopeConfig,
+        ErrorFactory $rateErrorFactory,
+        LoggerInterface $logger,
+        ResultFactory $rateResultFactory,
+        MethodFactory $rateMethodFactory,
         array $data = []
     ) {
         $this->quotingDataInitializer = $quotingDataInitializer;
@@ -88,11 +80,14 @@ class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
      */
     public function getAllowedMethods()
     {
-        return [
-            'envioskanguro_1' => $this->getConfigData('name'),
-            'envioskanguro_2' => $this->getConfigData('name'),
-            'envioskanguro_3' => $this->getConfigData('name')
-        ];
+        $methods = [];
+        $rates = $this->quotingDataInitializer->getAvailableRates();
+
+        foreach ($rates as $rate) {
+            $methods[$rate['code']] = $rate['name'];
+        }
+
+        return $methods;
     }
 
     /**
@@ -101,7 +96,7 @@ class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
      */
     public function collectRates(RateRequest $request)
     {
-        /** @var \Magento\Shipping\Model\Rate\Result $result */
+        /** @var Result $result */
         $result = $this->_rateResultFactory->create();
 
         if (!$this->getConfigFlag('active')) {
@@ -109,28 +104,34 @@ class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
         }
 
         try {
-            $rates = $this->quotingDataInitializer->getAvailableRates($request);
-        } catch (\Throwable $th) {
-            //throw $th;
-            $rates = [];
+            $rates = $this->quotingDataInitializer->getAvailableRates();
+        } catch (LocalizedException $e) {
+            $this->_logger->log(LogLevel::WARNING, $e->getMessage(), ['exception' => $e]);
+            $error = $this->_rateErrorFactory->create(['data' => [
+                'carrier' => $this->_code,
+                'carrier_title' => $this->getConfigData('title'),
+                'error_message' => $this->getConfigData('specificerrmsg'),
+            ]]);
+
+            $result->append($error);
         }
 
         if (empty($rates)) {
             return false;
         }
 
-        foreach ($rates->rates as $rate) {
+        foreach ($rates as $rate) {
 
-            /** @var \Magento\Quote\Model\Quote\Address\RateResult\Method $method */
+            /** @var Method $method */
             $method = $this->_rateMethodFactory->create();
 
             $method->setCarrier($this->_code);
             $method->setCarrierTitle($this->getConfigData('title'));
 
-            $method->setMethod($this->_code . '_' . $rate->best);
-            $method->setMethodTitle($rate->name);
+            $method->setMethod($rate['code']);
+            $method->setMethodTitle($rate['name']);
 
-            $amount = $rate->total_price; //$this->getShippingPrice();
+            $amount = !is_null($rate['custom_price']) ? $rate['custom_price'] : $rate['original_price'];
 
             $method->setPrice($amount);
             $method->setCost($amount);
@@ -139,7 +140,7 @@ class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
         }
 
         if (empty($result->getAllRates())) {
-            /** @var \Magento\Quote\Model\Quote\Address\RateResult\Error $error */
+            /** @var Error $error */
             $error = $this->_rateErrorFactory->create(['data' => [
                 'carrier' => $this->_code,
                 'carrier_title' => $this->getConfigData('title'),
@@ -148,7 +149,14 @@ class Carrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements
             $result->append($error);
         }
 
-
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTrackingAvailable()
+    {
+        return false;
     }
 }

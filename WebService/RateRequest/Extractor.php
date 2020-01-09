@@ -9,10 +9,8 @@
 
 namespace Envioskanguro\Shipping\WebService\RateRequest;
 
-use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Framework\Exception\LocalizedException;
 
-use Magento\Shipping\Model\Config;
 use Magento\Checkout\Model\Session;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -20,21 +18,21 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 class Extractor
 {
     /** 
-     * Config
+     * @var ScopeInterface
      */
-    protected $_scopeConfig;
+    protected $scopeConfig;
 
     /** 
-     * Checkout Session
+     * @var Session
      */
-    protected $_checkoutSession;
+    protected $checkoutSession;
 
     public function __construct(
-        Session $_checkoutSession,
+        Session $checkoutSession,
         ScopeConfigInterface $scopeConfig
     ) {
-        $this->_scopeConfig = $scopeConfig;
-        $this->_checkoutSession = $_checkoutSession;
+        $this->scopeConfig = $scopeConfig;
+        $this->checkoutSession = $checkoutSession;
     }
 
     /**
@@ -45,19 +43,19 @@ class Extractor
      */
     public function getQuote()
     {
-        return $this->_checkoutSession->getQuote();
+        return $this->checkoutSession->getQuote();
     }
 
     /** 
      * Get Quoting Info
      */
-    public function getQuotingData(RateRequest $rateRequest)
+    public function getQuotingData()
     {
         return [
             'identifier'    => '#' . $this->getIdentifier(),
             'origin'        => $this->getShippingOrigin(),
             'destination'   => $this->getShippingDestination(),
-            'items'         => $this->getItems($rateRequest)
+            'items'         => $this->getItems()
         ];
     }
 
@@ -72,15 +70,14 @@ class Extractor
     /**
      * Normalize rate request items. In rare cases they are not set at all.
      *
-     * @param RateRequest $rateRequest
      * @return \Magento\Quote\Model\Quote\Item\AbstractItem[]
      */
-    public function getItems(RateRequest $rateRequest)
+    public function getItems()
     {
         $items = [];
 
-        if ($rateRequest->getAllItems()) {
-            foreach ($rateRequest->getAllItems() as $item) {
+        if ($this->getQuote()->getAllItems()) {
+            foreach ($this->getQuote()->getAllItems() as $item) {
 
                 if ($item->getProduct()->isVirtual() || $item->getParentItem()) {
                     continue;
@@ -106,19 +103,19 @@ class Extractor
     public function getShippingOrigin()
     {
         return [
-            'name'  => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_name'),
-            'email' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_email'),
-            'home_phone' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_home_phone'),
-            'cell_phone' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_cell_phone'),
-            'street' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_street'),
-            'street_number' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_street_number'),
-            'colony' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_colony'),
-            'city'  => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_city'),
-            'state' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_state'),
-            'zip'    => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_zip'),
-            'references_1' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_references_1'),
+            'name'  => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_name'),
+            'email' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_email'),
+            'home_phone' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_home_phone'),
+            'cell_phone' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_cell_phone'),
+            'street' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_street'),
+            'street_number' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_street_number'),
+            'colony' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_colony'),
+            'city'  => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_city'),
+            'state' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_state'),
+            'zip'    => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_zip'),
+            'references_1' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_references_1'),
             'references_2' => null,
-            'notes' => $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_notes'),
+            'notes' => $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_notes'),
         ];
     }
 
@@ -137,7 +134,7 @@ class Extractor
             'email' =>
             !empty($this->getQuote()->getCustomerEmail()) ?
                 $this->getQuote()->getCustomerEmail() :
-                $this->_scopeConfig->getValue('carriers/envioskanguro/origin_address_email'),
+                $this->scopeConfig->getValue('carriers/envioskanguro/origin_address_email'),
             'home_phone' => $this->getQuote()->getShippingAddress()->getTelephone(),
             'cell_phone' => null,
             'street' => $this->getQuote()->getShippingAddress()->getStreet()[0],

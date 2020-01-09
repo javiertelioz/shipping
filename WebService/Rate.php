@@ -9,42 +9,47 @@
 
 namespace Envioskanguro\Shipping\WebService;
 
-
-use Psr\Log\LogLevel;
-use Psr\Log\LoggerInterface;
-
 use EnviosKanguro\Api;
+use Envioskanguro\Shipping\WebService\Mapping\RateInterface;
 
-use Magento\Quote\Model\Quote\Address\RateRequest;
+use Envioskanguro\Shipping\WebService\Mode;
+
+use Psr\Log\LoggerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
-class Rate
+class Rate implements RateInterface
 {
     /**
-     * Client
+     * @var Api
      */
-    protected $_client;
+    protected $client;
 
     /** 
-     * Log
+     * @var Logger
      */
-    protected $_logger;
-    
+    protected $logger;
+
     /** 
-     * Config
+     * @var ScopeConfig
      */
-    protected $_scopeConfig;
+    protected $scopeConfig;
+
+    /** 
+     * @var Mode
+     */
+    protected $mode;
 
     public function __construct(
         LoggerInterface $logger,
-        ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig,
+        Mode $mode
     ) {
+        $this->logger = $logger;
+        $this->scopeConfig = $scopeConfig;
+        $this->mode = $mode;
 
-        $this->_logger = $logger;
-        $this->_scopeConfig = $scopeConfig;
-
-        $token = $this->_scopeConfig->getValue('carriers/envioskanguro/token');
-        $this->_client = new Api($token, 'development');
+        $token = $this->scopeConfig->getValue('carriers/envioskanguro/token');
+        $this->client = new Api($token, 'development');
     }
 
     /**
@@ -52,19 +57,53 @@ class Rate
      *
      * The order is being built from the quote and rate request.
      * 
-     * @param RateRequest $rateRequest
-     * 
+     * @param $quotingData
      */
-    public function getRates($quotingData)
+    public function getRates($quotingData): array
     {
-        $rates = $this->_client->post('rate', $quotingData);
+        $rates = $this->client->post('rate', $quotingData);
         
-        $this->_logger->debug(var_export($rates['body']->data, true));
+        // $this->logger->debug(var_export($rates['body']->data, true));
 
         if (isset($rates['body']->data)) {
-            return $rates['body']->data;
+            return $this->mapping($rates['body']->data);
         }
 
         return [];
+    }
+
+    /**
+     * Generate Code
+     * 
+     * @return string code
+     */
+    protected function generateCode($name) {
+        return strtolower(strtok($name, " "));
+    }
+
+    /** 
+     * Mapping Request
+     * 
+     * @return array
+     */
+    protected function mapping($rates)
+    {
+        $available = [];
+
+        foreach ($rates->rates as $rate) {
+            $available[] = [
+                'code'      => $this->generateCode($rate->name),
+                'name'      => $rate->name,
+                'best'      => $rate->best,
+                'rate_id'   => $rate->id,
+                'quote_id'  => $rates->id,
+                'ranking'   => $rate->ranking,
+                'original_price' => $rate->total_price,
+                'custom_price' => null,
+                'created_at' => $rates->created_at,
+            ];
+        }
+
+        return $this->mode->getMethods($available);  
     }
 }
