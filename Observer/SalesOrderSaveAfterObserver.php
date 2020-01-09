@@ -8,7 +8,7 @@ class SalesOrderSaveAfterObserver implements ObserverInterface {
 	protected $_logger;
 
 	public function __construct(
-		\Psr\Log\LoggerInterface $logger,
+		\Psr\Log\LoggerInterface $logger
 		/*\Magento\Framework\Registry $registry*/
 	) {
 		$this->_logger = $logger;
@@ -20,12 +20,12 @@ class SalesOrderSaveAfterObserver implements ObserverInterface {
 	public function execute(\Magento\Framework\Event\Observer $observer) {
 		$order = $observer->getOrder();
 		$method = $order->getShippingMethod(); //envioskanguro_standar_223
-        /*$rates = $this->_registry->registry('Rates');
-        $data = $rates['body']->data;
-        foreach ($$data as $key => $rate) {
-        	# code...
-			$this->_logger->info(' |->>> '.$rate, true);
-        }*/
+		/*$rates = $this->_registry->registry('Rates');
+	        $data = $rates['body']->data;
+	        foreach ($$data as $key => $rate) {
+	        	# code...
+				$this->_logger->info(' |->>> '.$rate, true);
+*/
 
 		// Additional observer execution code...
 		return $this;
