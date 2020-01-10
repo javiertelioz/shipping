@@ -67,11 +67,10 @@ class Mode
     {
         $mode = $this->getMode();
 
-        
         if ($mode === 'Fixed') {
             return $this->fixed->getRate($rates);
         }
-        
+
         if ($mode === 'Threshold') {
             return $this->threshold->getRate($rates);
         }

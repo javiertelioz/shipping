@@ -3,8 +3,8 @@
 /**
  * Envios Kanguro Shipping
  *
- * @license    http://www.opensource.org/licenses/mit-license.html MIT License
- * @author     Javier Telio Z <jtelio118@gmail.com>
+ * @author Javier Telio Z <jtelio118@gmail.com>
+ * @license http://www.opensource.org/licenses/mit-license.html MIT License
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">

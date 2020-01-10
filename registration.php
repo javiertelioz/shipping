@@ -9,4 +9,8 @@
 
 use \Magento\Framework\Component\ComponentRegistrar;
 
-ComponentRegistrar::register(ComponentRegistrar::MODULE, 'Envioskanguro_Shipping', __DIR__);
+ComponentRegistrar::register(
+    ComponentRegistrar::MODULE,
+    'Envioskanguro_Shipping',
+    __DIR__
+);

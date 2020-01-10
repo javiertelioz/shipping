@@ -10,11 +10,13 @@
 namespace Envioskanguro\Shipping\WebService;
 
 use EnviosKanguro\Api;
-use Envioskanguro\Shipping\WebService\Mapping\RateInterface;
 
 use Envioskanguro\Shipping\WebService\Mode;
+use Envioskanguro\Shipping\WebService\RateRequest\Storage;
+use Envioskanguro\Shipping\WebService\Mapping\RateInterface;
 
 use Psr\Log\LoggerInterface;
+
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Rate implements RateInterface
@@ -39,27 +41,26 @@ class Rate implements RateInterface
      */
     protected $mode;
 
-    /**
-     * @var Registry
+    /** 
+     * @var Storage
      */
-    protected $_registry;
+    protected $storage;
 
     public function __construct(
+        Mode $mode,
+        Storage $storage,
         LoggerInterface $logger,
-        ScopeConfigInterface $scopeConfig,
-        Mode $mode/*,
-        \Magento\Framework\Registry $registry*/
+        ScopeConfigInterface $scopeConfig
     ) {
-        $this->logger = $logger;
-        $this->scopeConfig = $scopeConfig;
         $this->mode = $mode;
+        $this->logger = $logger;
+        $this->storage = $storage;
+        $this->scopeConfig = $scopeConfig;
 
         $token = $this->scopeConfig->getValue('carriers/envioskanguro/token');
         $environment = $this->scopeConfig->getValue('carriers/envioskanguro/environment');
-        
-        $this->client = new Api($token, $environment);
 
-        //$this->registry = $registry;
+        $this->client = new Api($token, $environment);
     }
 
     /**
@@ -71,21 +72,16 @@ class Rate implements RateInterface
      */
     public function getRates($quotingData): array
     {
-        /*$zip = $quotingData['destination']['zip'];
-        $regiter_zip = $this->_registry->registry('current_zip');
-
-        if(!empty($zip) && $zip == $regiter_zip ){
-            $rates = $this->_registry->registry('Rates');
-        } else {*/
-            $rates = $this->client->post('rate', $quotingData);
-            /*$this->registry->register($rates, 'Rates');
-            $this->registry->register($quotingData['destination']['zip'], 'current_zip');
-        }*/
+        $rates = $this->client->post('rate', $quotingData);
         
-        // $this->logger->debug(var_export($rates['body']->data, true));
-
         if (isset($rates['body']->data)) {
-            return $this->mapping($rates['body']->data);
+
+            $quoteId = $rates['body']->data->id;
+            $mapping = $this->mapping($rates['body']->data);
+
+            $this->storage->setRates($quoteId, $mapping);
+
+            return $mapping;
         }
 
         return [];
@@ -96,7 +92,8 @@ class Rate implements RateInterface
      * 
      * @return string code
      */
-    protected function generateCode($name) {
+    protected function generateCode($name)
+    {
         return strtolower(strtok($name, " "));
     }
 
@@ -117,12 +114,12 @@ class Rate implements RateInterface
                 'rate_id'   => $rate->id,
                 'quote_id'  => $rates->id,
                 'ranking'   => $rate->ranking,
-                'original_price' => $rate->total_price,
                 'custom_price' => null,
+                'original_price' => $rate->total_price,
                 'created_at' => $rates->created_at,
             ];
         }
 
-        return $this->mode->getMethods($available);  
+        return $this->mode->getMethods($available);
     }
 }

@@ -51,16 +51,11 @@ class Threshold
         $rate = array_slice($rates, 0, 1);
         $total = (float) $this->checkoutSession->getQuote()->getGrandTotal();
 
-        $this->logger->debug($total);
-        $this->logger->debug($this->getFreeFromPrice());
-
         if ($total > $this->getFreeFromPrice()) {
             $rate[0]['custom_price'] = 0.0;
         } else {
             $rate[0]['custom_price'] = $this->getPrice();
         }
-
-        $this->logger->debug(var_export($rate, true));
 
         return $rate;
     }

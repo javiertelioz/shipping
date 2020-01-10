@@ -9,147 +9,164 @@
 
 namespace Envioskanguro\Shipping\Model\Shipping;
 
-use Envioskanguro\Shipping\WebService\RateRequest\QuotingDataInitializer;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote\Address\RateRequest;
-use Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory;
-use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
-use Magento\Shipping\Model\Carrier\AbstractCarrier;
-use Magento\Shipping\Model\Carrier\CarrierInterface;
+use Psr\Log\LogLevel;
+use Psr\Log\LoggerInterface;
+
+use Envioskanguro\Shipping\WebService\RateRequest\Storage;
+
 use Magento\Shipping\Model\Rate\Result;
 use Magento\Shipping\Model\Rate\ResultFactory;
-use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
+use Magento\Quote\Model\Quote\Address\RateRequest;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Shipping\Model\Carrier\AbstractCarrier;
+use Magento\Shipping\Model\Carrier\CarrierInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory;
+use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
 
-class Carrier extends AbstractCarrier implements CarrierInterface {
-	/**
-	 * @var string
-	 */
-	protected $_code = 'envioskanguro';
+use Envioskanguro\Shipping\WebService\RateRequest\QuotingDataInitializer;
 
-	/**
-	 * @var ResultFactory
-	 */
-	protected $_rateResultFactory;
+class Carrier extends AbstractCarrier implements CarrierInterface
+{
+    /**
+     * @var string
+     */
+    protected $_code = 'envioskanguro';
 
-	/**
-	 * @var MethodFactory
-	 */
-	protected $_rateMethodFactory;
+    /**
+     * @var ResultFactory
+     */
+    protected $_rateResultFactory;
 
-	/**
-	 * @var QuotingDataInitializer
-	 */
-	private $quotingDataInitializer;
+    /**
+     * @var MethodFactory
+     */
+    protected $_rateMethodFactory;
 
-	/**
-	 * Shipping constructor.
-	 *
-	 * @param QuotingDataInitializer $quotingDataInitializer
-	 * @param ScopeConfigInterface $scopeConfig
-	 * @param ErrorFactory $rateErrorFactory
-	 * @param LoggerInterface $logger
-	 * @param ResultFactory $rateResultFactory
-	 * @param MethodFactory $rateMethodFactory
-	 * @param array $data
-	 *
-	 */
-	public function __construct(
-		QuotingDataInitializer $quotingDataInitializer,
-		ScopeConfigInterface $scopeConfig,
-		ErrorFactory $rateErrorFactory,
-		LoggerInterface $logger,
-		ResultFactory $rateResultFactory,
-		MethodFactory $rateMethodFactory,
-		array $data = []
-	) {
-		$this->quotingDataInitializer = $quotingDataInitializer;
-		$this->_rateResultFactory = $rateResultFactory;
-		$this->_rateMethodFactory = $rateMethodFactory;
-		parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
-	}
+    /**
+     * @var QuotingDataInitializer
+     */
+    private $quotingDataInitializer;
 
-	/**
-	 * get allowed methods
-	 * @return array
-	 */
-	public function getAllowedMethods() {
-		$methods = [];
-		$rates = $this->quotingDataInitializer->getAvailableRates();
+    /** 
+     * @var Storage
+     */
+    protected $storage;
 
-		foreach ($rates as $rate) {
-			$methods[$rate['code']] = $rate['name'];
-		}
+    /**
+     * Shipping constructor.
+     * 
+     * @param Storage $storage,
+     * @param QuotingDataInitializer $quotingDataInitializer
+     * @param ScopeConfigInterface $scopeConfig
+     * @param ErrorFactory $rateErrorFactory
+     * @param LoggerInterface $logger
+     * @param ResultFactory $rateResultFactory
+     * @param MethodFactory $rateMethodFactory
+     * @param array $data
+     * 
+     */
+    public function __construct(
+        Storage $storage,
+        QuotingDataInitializer $quotingDataInitializer,
+        ScopeConfigInterface $scopeConfig,
+        ErrorFactory $rateErrorFactory,
+        LoggerInterface $logger,
+        ResultFactory $rateResultFactory,
+        MethodFactory $rateMethodFactory,
+        array $data = []
+    ) {
+        $this->storage = $storage;
+        $this->quotingDataInitializer = $quotingDataInitializer;
+        $this->_rateResultFactory = $rateResultFactory;
+        $this->_rateMethodFactory = $rateMethodFactory;
+        parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
+    }
 
-		return $methods;
-	}
+    /**
+     * get allowed methods
+     * @return array
+     */
+    public function getAllowedMethods()
+    {
+        $methods = [];
+        $quote = $this->storage->getRateByCurrentQuote();
+        $rates = unserialize($quote->getContent());
 
-	/**
-	 * @param RateRequest $request
-	 * @return bool|Result
-	 */
-	public function collectRates(RateRequest $request) {
-		/** @var Result $result */
-		$result = $this->_rateResultFactory->create();
+        foreach ($rates as $rate) {
+            $methods[$rate['code']] = $rate['name'];
+        }
 
-		if (!$this->getConfigFlag('active')) {
-			return $result;
-		}
+        return $methods;
+    }
 
-		try {
-			$rates = $this->quotingDataInitializer->getAvailableRates();
-		} catch (LocalizedException $e) {
-			$this->_logger->log(LogLevel::WARNING, $e->getMessage(), ['exception' => $e]);
-			$error = $this->_rateErrorFactory->create(['data' => [
-				'carrier' => $this->_code,
-				'carrier_title' => $this->getConfigData('title'),
-				'error_message' => $this->getConfigData('specificerrmsg'),
-			]]);
+    /**
+     * @param RateRequest $request
+     * @return bool|Result
+     */
+    public function collectRates(RateRequest $request)
+    {
+        /** @var Result $result */
+        $result = $this->_rateResultFactory->create();
 
-			$result->append($error);
-		}
+        if (!$this->getConfigFlag('active')) {
+            return $result;
+        }
 
-		if (empty($rates)) {
-			return false;
-		}
+        try {
+            $rates = $this->quotingDataInitializer->getAvailableRates();
+        } catch (LocalizedException $e) {
+            $this->_logger->log(LogLevel::WARNING, $e->getMessage(), ['exception' => $e]);
+            $error = $this->_rateErrorFactory->create(['data' => [
+                'carrier' => $this->_code,
+                'carrier_title' => $this->getConfigData('title'),
+                'error_message' => $this->getConfigData('specificerrmsg'),
+            ]]);
 
-		foreach ($rates as $rate) {
+            $result->append($error);
+        }
 
-			/** @var Method $method */
-			$method = $this->_rateMethodFactory->create();
+        if (empty($rates)) {
+            return false;
+        }
 
-			$method->setCarrier($this->_code);
-			$method->setCarrierTitle($this->getConfigData('title'));
+        foreach ($rates as $rate) {
 
-			$method->setMethod($rate['code']);
-			$method->setMethodTitle($rate['name']);
+            /** @var Method $method */
+            $method = $this->_rateMethodFactory->create();
 
-			$amount = !is_null($rate['custom_price']) ? $rate['custom_price'] : $rate['original_price'];
+            $method->setCarrier($this->_code);
+            $method->setCarrierTitle($this->getConfigData('title'));
 
-			$method->setPrice($amount);
-			$method->setCost($amount);
+            $method->setMethod($rate['code']);
+            $method->setMethodTitle($rate['name']);
 
-			$result->append($method);
-		}
+            $amount = !is_null($rate['custom_price']) ? $rate['custom_price'] : $rate['original_price'];
 
-		if (empty($result->getAllRates())) {
-			/** @var Error $error */
-			$error = $this->_rateErrorFactory->create(['data' => [
-				'carrier' => $this->_code,
-				'carrier_title' => $this->getConfigData('title'),
-				'error_message' => $this->getConfigData('specificerrmsg'),
-			]]);
-			$result->append($error);
-		}
+            $method->setPrice($amount);
+            $method->setCost($rate['original_price']);
 
-		return $result;
-	}
+            $result->append($method);
+        }
 
-	/**
-	 * @return bool
-	 */
-	public function isTrackingAvailable() {
-		return false;
-	}
+        if (empty($result->getAllRates())) {
+            /** @var Error $error */
+            $error = $this->_rateErrorFactory->create(['data' => [
+                'carrier' => $this->_code,
+                'carrier_title' => $this->getConfigData('title'),
+                'error_message' => $this->getConfigData('specificerrmsg'),
+            ]]);
+            $result->append($error);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTrackingAvailable()
+    {
+        return false;
+    }
 }
