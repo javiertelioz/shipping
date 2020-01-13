@@ -7,10 +7,8 @@
  * @license http://www.opensource.org/licenses/mit-license.html MIT License
  */
 
-use Magento\Framework\Component\ComponentRegistrar;
+namespace Envioskanguro\Shipping\Plugin\Logger;
 
-ComponentRegistrar::register(
-    ComponentRegistrar::MODULE,
-    'Envioskanguro_Shipping',
-    __DIR__
-);
+class Logger extends \Monolog\Logger
+{
+}

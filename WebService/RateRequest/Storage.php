@@ -3,13 +3,11 @@
 /**
  * Envios Kanguro Shipping
  *
- * @author     Javier Telio Z <jtelio118@gmail.com>
- * @license    http://www.opensource.org/licenses/mit-license.html MIT License
+ * @author Javier Telio Z <jtelio118@gmail.com>
+ * @license http://www.opensource.org/licenses/mit-license.html MIT License
  */
 
 namespace Envioskanguro\Shipping\WebService\RateRequest;
-
-use Psr\Log\LoggerInterface;
 
 use Magento\Checkout\Model\Session;
 use Envioskanguro\Shipping\Model\RateFactory;
@@ -17,12 +15,7 @@ use Envioskanguro\Shipping\Model\RateFactory;
 class Storage
 {
     /** 
-     * @var Logger
-     */
-    protected $logger;
-
-    /** 
-     * @var Session
+     * @var Session $checkoutSession
      */
     protected $checkoutSession;
 
@@ -35,11 +28,9 @@ class Storage
      * @param RateFactory $rateFactory,
      */
     public function __construct(
-        LoggerInterface $logger,
         Session $checkoutSession,
         RateFactory $rateFactory
     ) {
-        $this->logger = $logger;
         $this->rateFactory = $rateFactory;
         $this->checkoutSession = $checkoutSession;
     }
@@ -51,12 +42,14 @@ class Storage
      */
     public function setRates($quoteId, $rates)
     {
-        $flag = $this->getRateByCurrentQuote()->getId();
+        $sessionId = $this->checkoutSession->getQuote()->getId();
+        $flag = $this->getRateByCurrentQuote($sessionId)->getId();
+
         $model = $this->rateFactory->create();
         $rateData = [
             "content" => serialize($rates),
             "quote_id" => $quoteId,
-            "session_id" => $this->checkoutSession->getQuote()->getId(),
+            "session_id" => $sessionId,
         ];
 
         if ($flag === null) {
@@ -73,11 +66,27 @@ class Storage
      * Retrieving Quote from database
      * @return mixed
      */
-    public function getRateByCurrentQuote()
+    public function getRateByCurrentQuote($quoteId)
     {
         $model = $this->rateFactory->create();
-        $quoteId = $this->checkoutSession->getQuote()->getId();
 
         return $model->load($quoteId, 'session_id');
+    }
+
+    /**
+     * Update Quote from database
+     * 
+     * @param integer $orderId
+     * @param array $quote
+     * 
+     * @return void
+     */
+    public function updateQuote($orderId, $quote)
+    {
+        $model = $this->rateFactory->create();
+
+        $model->load($orderId, 'session_id');
+        $model->addData($quote);
+        $model->save();
     }
 }

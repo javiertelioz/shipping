@@ -25,7 +25,12 @@
                     <label>Mode</label>
                     <source_model>Envioskanguro\Shipping\Model\Config\Backend\Mode</source_model>
                 </field>
-                <field id="free_from" translate="label" type="text" sortOrder="41" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                <field id="logging_enabled" translate="label comment" type="select" sortOrder="41" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable API Logging</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Log all API communication. If set to <em>No</em>, only API errors will be logged.]]></comment>
+                </field>
+                <field id="free_from" translate="label" type="text" sortOrder="42" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Free From</label>
                     <comment><![CDATA[free shipping from.]]></comment>
                     <depends>
@@ -64,10 +69,9 @@
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                 </field>
-                <field id="logging_enabled" translate="label comment" type="select" sortOrder="150" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Enable API Logging</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[Log all API communication. If set to <em>No</em>, only API errors will be logged.]]></comment>
+                <field id="order_status_planned_to_ship" translate="label" type="select" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Order Statuses</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                 </field>
                 <field id="source_address" type="note" translate="label" sortOrder="290" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Source Address</label>
@@ -125,7 +129,6 @@
                     <label>Notes</label>
                     <backend_model>Envioskanguro\Shipping\Model\Config\Backend\TrimmedValue</backend_model>
                 </field>
-
                 <field id="product" type="note" translate="label" sortOrder="500" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Product</label>
                     <frontend_model>Envioskanguro\Shipping\Block\Adminhtml\System\Config\Form\Field\Origin</frontend_model>
@@ -144,7 +147,7 @@
                     <label>Height</label>
                     <source_model>Envioskanguro\Shipping\Model\Config\Backend\Attributes</source_model>
                     <comment><![CDATA[Leave default values for empty, <strong>Default (0)</strong>]]></comment>
-                </field>
+                </field>                
             </group>
         </section>
     </system>

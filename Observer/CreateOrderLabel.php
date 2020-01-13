@@ -9,23 +9,28 @@
 
 namespace Envioskanguro\Shipping\Observer;
 
-
 use Envioskanguro\Shipping\Plugin\Logger\Logger;
 use Envioskanguro\Shipping\WebService\QuotationService;
+use Envioskanguro\Shipping\WebService\TrackingService;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
-class SaveSalesOrder implements ObserverInterface
+class CreateOrderLabel implements ObserverInterface
 {
     /** 
      * Prefix Shipping Code
      */
     const PREFIX_SHIPPING_CODE = 'envioskanguro';
 
+    /**
+     * Status Config
+     */
+    const STATUS_CONFIG_PATH = 'carriers/envioskanguro/order_status_planned_to_ship';
+
     /** 
-     * @var Logger $logger
+     * @var Logger
      */
     protected $logger;
 
@@ -33,6 +38,11 @@ class SaveSalesOrder implements ObserverInterface
      * @var ScopeConfig
      */
     protected $scopeConfig;
+
+    /**
+     * @var TrackingService $trackingService
+     */
+    protected $trackingService;
 
     /** 
      * @var QuotationService $quotationService
@@ -42,10 +52,12 @@ class SaveSalesOrder implements ObserverInterface
     public function __construct(
         Logger $logger,
         ScopeConfigInterface $scopeConfig,
+        TrackingService $trackingService,
         QuotationService $quotationService
     ) {
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
+        $this->trackingService = $trackingService;
         $this->quotationService = $quotationService;
     }
 
@@ -57,12 +69,22 @@ class SaveSalesOrder implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
+        $statuscode = $order->getStatus();
+
         $shippingMethod = $order->getShippingMethod();
+
+        $configOrderStatus = $this->scopeConfig->getValue(self::STATUS_CONFIG_PATH);
 
         if (strstr($shippingMethod, self::PREFIX_SHIPPING_CODE)) {
 
-            $this->logger->debug('Update Quote');
-            $this->quotationService->setSelectedQuotation($order);
+            if ($statuscode === $configOrderStatus) {
+                $this->logger->debug('Process Order: ' .$order->getId());
+                
+                $rate = $this->quotationService->authorizeQuotation($order);
+
+                $this->logger->debug('Download Tracking: ' . $rate->getTrackingNumber());
+                $this->trackingService->downloadTracking($rate->getTrackingNumber());
+            }
         }
 
         return $this;

@@ -12,6 +12,7 @@ namespace Envioskanguro\Shipping\Model\Shipping;
 use Psr\Log\LogLevel;
 use Psr\Log\LoggerInterface;
 
+use Magento\Checkout\Model\Session;
 use Envioskanguro\Shipping\WebService\RateRequest\Storage;
 
 use Magento\Shipping\Model\Rate\Result;
@@ -53,6 +54,11 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      */
     protected $storage;
 
+    /** 
+     * @var Session $checkoutSession
+     */
+    protected $checkoutSession;
+
     /**
      * Shipping constructor.
      * 
@@ -63,11 +69,13 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      * @param LoggerInterface $logger
      * @param ResultFactory $rateResultFactory
      * @param MethodFactory $rateMethodFactory
+     * @param Session $checkoutSession
      * @param array $data
      * 
      */
     public function __construct(
         Storage $storage,
+        Session $checkoutSession,
         QuotingDataInitializer $quotingDataInitializer,
         ScopeConfigInterface $scopeConfig,
         ErrorFactory $rateErrorFactory,
@@ -77,9 +85,11 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         array $data = []
     ) {
         $this->storage = $storage;
+        $this->checkoutSession = $checkoutSession;
         $this->quotingDataInitializer = $quotingDataInitializer;
         $this->_rateResultFactory = $rateResultFactory;
         $this->_rateMethodFactory = $rateMethodFactory;
+
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
 
@@ -90,7 +100,9 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     public function getAllowedMethods()
     {
         $methods = [];
-        $quote = $this->storage->getRateByCurrentQuote();
+        $quote = $this->storage->getRateByCurrentQuote(
+            $this->checkoutSession->getQuote()->getId()
+        );
         $rates = unserialize($quote->getContent());
 
         foreach ($rates as $rate) {

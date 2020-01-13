@@ -9,9 +9,8 @@
 
 namespace Envioskanguro\Shipping\WebService\RateRequest;
 
-use Psr\Log\LoggerInterface;
-
-use Envioskanguro\Shipping\WebService\Rate;
+use Envioskanguro\Shipping\Model\Mode;
+use Envioskanguro\Shipping\WebService\RateService;
 use Envioskanguro\Shipping\WebService\RateRequest\Extractor;
 
 use Magento\Framework\Exception\LocalizedException;
@@ -19,31 +18,33 @@ use Magento\Framework\Exception\LocalizedException;
 class QuotingDataInitializer
 {
     /**
+     * @var Mode $modality
+     */
+    protected $modality;
+
+    /**
      * @var Extractor
      */
     protected $rateRequestExtractor;
 
     /** 
-     * @var Rate Service
+     * @var RateService $rateService
      */
     protected $rateService;
 
-    /** 
-     * @var LoggerInterface
-     */
-    protected $logger;
-
     /**
      * QuotingDataInitializer constructor.
+     * 
+     * @param Mode $modality
      * @param Extractor $rateRequestExtractor
      * @param OrderInterfaceBuilder $orderBuilder
      */
     public function __construct(
-        LoggerInterface $logger,
-        Rate $rateService,
+        Mode $modality,
+        RateService $rateService,
         Extractor $rateRequestExtractor
     ) {
-        $this->logger = $logger;
+        $this->modality = $modality;
         $this->rateService = $rateService;
         $this->rateRequestExtractor = $rateRequestExtractor;
     }
@@ -53,7 +54,7 @@ class QuotingDataInitializer
      *
      * The order is being built from the quote and rate request.
      * The order may include
-     * - dynamic checkout fields,
+     * 
      * - delivery location selected during checkout.
      *
      * @throws LocalizedException
@@ -61,8 +62,8 @@ class QuotingDataInitializer
     public function getAvailableRates()
     {
         $quoting = $this->rateRequestExtractor->getQuotingData();
-
-        return $this->rateService->getRates($quoting);
+        $rates = $this->rateService->getRates($quoting);
+        
+        return $this->modality->getShippingMethods($rates);        
     }
-
 }
