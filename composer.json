@@ -1,7 +1,7 @@
 {
   "name": "envioskanguro/shipping",
   "description": "Envios kanguro shipping extension for Magento 2",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "type": "magento2-module",
   "license": "MIT",
   "authors": [
