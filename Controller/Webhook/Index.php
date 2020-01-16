@@ -7,7 +7,7 @@
  * @author Javier Telio Z <jtelio118@gmail.com>
  */
 
-namespace Envioskanguro\Shipping\Controller\Index;
+namespace Envioskanguro\Shipping\Controller\Webhook;
 
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
