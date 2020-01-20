@@ -12,14 +12,20 @@ namespace Envioskanguro\Shipping\Model\Shipping;
 use Psr\Log\LogLevel;
 use Psr\Log\LoggerInterface;
 
+use Magento\Checkout\Model\Session;
 use Envioskanguro\Shipping\WebService\RateRequest\Storage;
 
+use Envioskanguro\Shipping\WebService\TrackingService;
+
 use Magento\Shipping\Model\Rate\Result;
+use Magento\Store\Model\StoreManagerInterface;
 use Magento\Shipping\Model\Rate\ResultFactory;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Shipping\Model\Carrier\AbstractCarrier;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
+use Magento\Shipping\Model\Tracking\Result\StatusFactory;
+
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
@@ -29,9 +35,19 @@ use Envioskanguro\Shipping\WebService\RateRequest\QuotingDataInitializer;
 class Carrier extends AbstractCarrier implements CarrierInterface
 {
     /**
-     * @var string
+     * @var string $_code
      */
     protected $_code = 'envioskanguro';
+
+    /**
+     * @var StatusFactory
+     */
+    private $trackStatusFactory;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
 
     /**
      * @var ResultFactory
@@ -53,6 +69,11 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      */
     protected $storage;
 
+    /** 
+     * @var Session $checkoutSession
+     */
+    protected $checkoutSession;
+
     /**
      * Shipping constructor.
      * 
@@ -62,24 +83,33 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      * @param ErrorFactory $rateErrorFactory
      * @param LoggerInterface $logger
      * @param ResultFactory $rateResultFactory
+     * @param StatusFactory $trackStatusFactory
      * @param MethodFactory $rateMethodFactory
+     * @param Session $checkoutSession
      * @param array $data
      * 
      */
     public function __construct(
         Storage $storage,
+        Session $checkoutSession,
         QuotingDataInitializer $quotingDataInitializer,
         ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager,
         ErrorFactory $rateErrorFactory,
         LoggerInterface $logger,
         ResultFactory $rateResultFactory,
+        StatusFactory $trackStatusFactory,
         MethodFactory $rateMethodFactory,
         array $data = []
     ) {
         $this->storage = $storage;
+        $this->storeManager = $storeManager;
+        $this->checkoutSession = $checkoutSession;
         $this->quotingDataInitializer = $quotingDataInitializer;
         $this->_rateResultFactory = $rateResultFactory;
         $this->_rateMethodFactory = $rateMethodFactory;
+        $this->trackStatusFactory = $trackStatusFactory;
+
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
 
@@ -90,7 +120,9 @@ class Carrier extends AbstractCarrier implements CarrierInterface
     public function getAllowedMethods()
     {
         $methods = [];
-        $quote = $this->storage->getRateByCurrentQuote();
+        $quote = $this->storage->getRateByCurrentQuote(
+            $this->checkoutSession->getQuote()->getId()
+        );
         $rates = unserialize($quote->getContent());
 
         foreach ($rates as $rate) {
@@ -167,6 +199,49 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      */
     public function isTrackingAvailable()
     {
-        return false;
+        return true;
+    }
+
+    /**
+     * Get tracking information. Original return value annotation is misleading.
+     *
+     * @param string $trackingNumber
+     * @return \Magento\Shipping\Model\Tracking\Result\AbstractResult
+     */
+    public function getTrackingInfo($trackingNumber)
+    {
+        /** @var \Magento\Shipping\Model\Tracking\Result\Status $tracking */
+        $tracking = $this->trackStatusFactory->create();
+        $tracking->setCarrier($this->_code);
+        $tracking->setTracking($trackingNumber);
+
+        try {
+            $rate = $this->storage->getRateByTrackingNumber($trackingNumber);
+
+            $carrierTitle = $this->getConfigData('title') . DIRECTORY_SEPARATOR . $rate->getShippingCode();
+            $trackingUrl = $this->getTrackingUrl($rate->getTrackingNumber());
+
+            $tracking->setCarrierTitle($carrierTitle);
+            $tracking->setUrl($trackingUrl);
+            
+        } catch (LocalizedException $exception) {
+            $this->messageManager->addErrorMessage($exception->getMessage());
+
+            $tracking->setCarrierTitle($this->getConfigData('title'));
+            $tracking->setUrl('');
+        }
+
+        return $tracking;
+    }
+
+    /**
+     * Get Tracking File
+     */
+    private function getTrackingUrl($trackingNumber)
+    {
+        return $this->storeManager->getStore()
+            ->getBaseUrl(
+                \Magento\Framework\UrlInterface::URL_TYPE_WEB
+            ) . 'pub' . TrackingService::TRACKING_FOLDER . '/' . $trackingNumber . '.pdf';
     }
 }

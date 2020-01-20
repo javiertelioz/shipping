@@ -7,19 +7,16 @@
  * @license http://www.opensource.org/licenses/mit-license.html MIT License
  */
 
-namespace Envioskanguro\Shipping\WebService\Mode;
-
-use Psr\Log\LoggerInterface;
+namespace Envioskanguro\Shipping\Model\Mode;
 
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
-class Threshold
+use Envioskanguro\Shipping\Model\Mode\Modality\ModalityInterface;
+
+class Threshold implements ModalityInterface
 {
-    /** 
-     * @var Logger
-     */
-    protected $logger;
+    const MODALITY_CODE = 'Threshold';
 
     /** 
      * @var Session
@@ -31,22 +28,21 @@ class Threshold
      */
     protected $scopeConfig;
 
-    /**
-     * QuotingDataInitializer constructor.
-     * @param Extractor $rateRequestExtractor
-     * @param OrderInterfaceBuilder $orderBuilder
-     */
     public function __construct(
-        LoggerInterface $logger,
         Session $checkoutSession,
         ScopeConfigInterface $scopeConfig
     ) {
-        $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
         $this->checkoutSession = $checkoutSession;
     }
 
-    public function getRate($rates)
+    /**
+     * Retrieve rates.
+     *
+     * @param $rates
+     * @return mixed
+     */
+    public function getAvailableRates($rates): array
     {
         $rate = array_slice($rates, 0, 1);
         $total = (float) $this->checkoutSession->getQuote()->getGrandTotal();
@@ -54,17 +50,24 @@ class Threshold
         if ($total > $this->getFreeFromPrice()) {
             $rate[0]['custom_price'] = 0.0;
         } else {
-            $rate[0]['custom_price'] = $this->getPrice();
+            $price = isset($rate[0]['original_price']) ? $rate[0]['original_price'] : $this->getPrice();
+            $rate[0]['custom_price'] = $price;
         }
 
         return $rate;
     }
 
+    /** 
+     * Get Shipping Price
+     */
     protected function getPrice()
     {
         return (float) $this->scopeConfig->getValue('carriers/envioskanguro/price');
     }
 
+    /** 
+     * Get free price 
+     */
     protected function getFreeFromPrice()
     {
         return (float) $this->scopeConfig->getValue('carriers/envioskanguro/free_from');

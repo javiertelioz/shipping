@@ -7,7 +7,7 @@
  * @author Javier Telio Z <jtelio118@gmail.com>
  */
 
-namespace Envioskanguro\Shipping\Model\ResourceModel;
+namespace Envioskanguro\Shipping\Model\ResourceModel\Rate;
 
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 

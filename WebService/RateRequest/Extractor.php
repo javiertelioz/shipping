@@ -51,6 +51,10 @@ class Extractor
      */
     public function getQuotingData()
     {
+        if (is_null($this->getQuote()->getShippingAddress()->getPostcode())) {
+            return [];
+        }
+
         return [
             'identifier'    => '#' . $this->getIdentifier(),
             'origin'        => $this->getShippingOrigin(),

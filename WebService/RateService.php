@@ -3,64 +3,59 @@
 /**
  * Envios Kanguro Shipping
  *
- * @license    http://www.opensource.org/licenses/mit-license.html MIT License
- * @author     Javier Telio Z <jtelio118@gmail.com>
+ * @author Javier Telio Z <jtelio118@gmail.com>
+ * @license http://www.opensource.org/licenses/mit-license.html MIT License
  */
 
 namespace Envioskanguro\Shipping\WebService;
 
-use EnviosKanguro\Api;
-
-use Envioskanguro\Shipping\WebService\Mode;
+use Envioskanguro\Shipping\WebService\Api\Api;
+use Envioskanguro\Shipping\Plugin\Logger\Logger;
 use Envioskanguro\Shipping\WebService\RateRequest\Storage;
 use Envioskanguro\Shipping\WebService\Mapping\RateInterface;
 
-use Psr\Log\LoggerInterface;
-
+use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
-class Rate implements RateInterface
+class RateService implements RateInterface
 {
     /**
-     * @var Api
+     * @var Api $api
      */
-    protected $client;
+    protected $api;
 
     /** 
-     * @var Logger
+     * @var Logger $logger
      */
     protected $logger;
 
     /** 
-     * @var ScopeConfig
+     * @var ScopeConfig $scopeConfig
      */
     protected $scopeConfig;
 
     /** 
-     * @var Mode
+     * @var Session $checkoutSession
      */
-    protected $mode;
+    protected $checkoutSession;
 
     /** 
-     * @var Storage
+     * @var Storage $storage
      */
     protected $storage;
 
     public function __construct(
-        Mode $mode,
+        Api $api,
+        Logger $logger,
         Storage $storage,
-        LoggerInterface $logger,
+        Session $checkoutSession,
         ScopeConfigInterface $scopeConfig
     ) {
-        $this->mode = $mode;
+        $this->api = $api;
         $this->logger = $logger;
         $this->storage = $storage;
         $this->scopeConfig = $scopeConfig;
-
-        $token = $this->scopeConfig->getValue('carriers/envioskanguro/token');
-        $environment = $this->scopeConfig->getValue('carriers/envioskanguro/environment');
-
-        $this->client = new Api($token, $environment);
+        $this->checkoutSession = $checkoutSession;
     }
 
     /**
@@ -68,33 +63,24 @@ class Rate implements RateInterface
      *
      * The order is being built from the quote and rate request.
      * 
-     * @param $quotingData
+     * @param array $quotingData
+     * @return array
      */
     public function getRates($quotingData): array
     {
-        $rates = $this->client->post('rate', $quotingData);
-        
+        $rates = $this->api->post('rate', $quotingData);
+
         if (isset($rates['body']->data)) {
 
             $quoteId = $rates['body']->data->id;
-            $mapping = $this->mapping($rates['body']->data);
+            $rates = $this->mappingRequest($rates['body']->data);
 
-            $this->storage->setRates($quoteId, $mapping);
+            $this->storage->setRates($quoteId, $rates);
 
-            return $mapping;
+            return $rates;
         }
 
         return [];
-    }
-
-    /**
-     * Generate Code
-     * 
-     * @return string code
-     */
-    protected function generateCode($name)
-    {
-        return strtolower(strtok($name, " "));
     }
 
     /** 
@@ -102,13 +88,13 @@ class Rate implements RateInterface
      * 
      * @return array
      */
-    protected function mapping($rates)
+    protected function mappingRequest($rates): array
     {
         $available = [];
 
         foreach ($rates->rates as $rate) {
             $available[] = [
-                'code'      => $this->generateCode($rate->name),
+                'code'      => strtolower(strtok($rate->name, " ")),
                 'name'      => $rate->name,
                 'best'      => $rate->best,
                 'rate_id'   => $rate->id,
@@ -120,6 +106,9 @@ class Rate implements RateInterface
             ];
         }
 
-        return $this->mode->getMethods($available);
+        $this->logger->debug('Shipping Rates: ' . var_export($available, true));
+
+        return $available;
     }
+
 }

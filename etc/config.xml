@@ -3,8 +3,8 @@
 /**
  * Envios Kanguro Shipping
  *
- * @license    http://www.opensource.org/licenses/mit-license.html MIT License
- * @author     Javier Telio Z <jtelio118@gmail.com>
+ * @author Javier Telio Z <jtelio118@gmail.com>
+ * @license http://www.opensource.org/licenses/mit-license.html MIT License
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
@@ -17,27 +17,29 @@
                 <title>Envios Kanguro</title>
                 <sallowspecific>0</sallowspecific>
                 <name>Envios Kanguro</name>
-                <free_from>50.00</free_from>
+                <free_from>500.00</free_from>
                 <price>89.00</price>
                 <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
                 <showmethod>0</showmethod>
                 <sort_order>10</sort_order>
-                <logging_enabled>0</logging_enabled>
+                <logging_enabled>1</logging_enabled>
                 <model>Envioskanguro\Shipping\Model\Shipping\Carrier</model>
                 <token>eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjMzZmYyYjAxMmJkNjc3NmNkZDBmNGU5NmMyMjIzZWRmZThkM2MwZmQ3MWQxNjM5MGQxNjExZjRjMTkxNTM5ZjNjMzExOTI5ODIxYmZjODg3In0.eyJhdWQiOiIxIiwianRpIjoiMzNmZjJiMDEyYmQ2Nzc2Y2RkMGY0ZTk2YzIyMjNlZGZlOGQzYzBmZDcxZDE2MzkwZDE2MTFmNGMxOTE1MzlmM2MzMTE5Mjk4MjFiZmM4ODciLCJpYXQiOjE1NTE4MDk3ODgsIm5iZiI6MTU1MTgwOTc4OCwiZXhwIjoxNTgzNDMyMTg4LCJzdWIiOiIxMyIsInNjb3BlcyI6WyJyZXN0LW9yZGVycyJdfQ.OdadzoaS5D12bdxSddrkuYPsZjrpD3C24GI10BMRhGwCIgLMQQ-tJqEQlKUGODSh9F56fbTrsnC8ohYD6ryoXtyvoLSLBgzziF2K78LmRhM4k4hSIcOk64uqD-GRGUr9Axgou_ElitfrRV57wndGIClLKu7c_bg73BtkBDQv4SD6SeVExqXO4rvjCweR0hLZ3C5arifmIHDXatEorRKUSxXQ89d7LkvOnaqn88HgIGZaz9g6eS5Yyr3Lbj2qctbcN8po0Kgju3QnVLsOw6NsGxNO6AlkbSjxrH2LVGk6JXNP1vXy_VOpDUHx_Fic2yHSDFTFg843ccy1c8ss2-5ICaMt0US45fcN-d-w8vWWMgO6J0gn7uh964-a3VRH9g0OHilfVl54sM4nIDLDMDu8vPBzKHUFoj_zWhcOg-hBvPWHQ_md4pc023IEW8Z9nl-g5KfUwHs4uoPJ29bNUYbA3XFqs-udxKzW65Vujfh-f7ipsrucrZzAnCleergwjMY4qLWYcscypAZvgzmqCtzo8LEkRK1SW4vKj74ew2H3e1XBIAFYnkDRRm6OjESpwhWISQZ1-Wpru8t1p6PJOXoWL8Z1U1O1ConY8QIbATiPGPRhV1EoAmbjB1gH3T4Y8Ou8cRAJfHRNlNkXlEqce3D_KyD3PIHh-s1zwNR_y66rOB8</token>
-
                 <origin_address_name>Envios Kanguro</origin_address_name>
                 <origin_address_email>envioskanguro@envioskanguro.com</origin_address_email>
                 <origin_address_home_phone>55555555</origin_address_home_phone>
                 <origin_address_cell_phone></origin_address_cell_phone>
                 <origin_address_street>Culiacán</origin_address_street>
                 <origin_address_street_number>123, Piso 13</origin_address_street_number>
+                <order_status_planned_to_ship>processing</order_status_planned_to_ship>
                 <origin_address_colony>Hipódromo Condesa</origin_address_colony>
                 <origin_address_city>Mexico City</origin_address_city>
                 <origin_address_state>CDMX</origin_address_state>
                 <origin_address_zip>06100</origin_address_zip>
                 <origin_address_references_1></origin_address_references_1>
                 <origin_address_notes></origin_address_notes>
+                <auto_generate_invoice>1</auto_generate_invoice>
+                <auto_generate_shipment>1</auto_generate_shipment>
             </envioskanguro>
         </carriers>
     </default>

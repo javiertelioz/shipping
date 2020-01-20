@@ -10,41 +10,34 @@
 namespace Envioskanguro\Shipping\Observer;
 
 use Envioskanguro\Shipping\Plugin\Logger\Logger;
-use Envioskanguro\Shipping\Model\Actions\OrderActions as Actions;
-use Envioskanguro\Shipping\WebService\TrackingService;
 use Envioskanguro\Shipping\WebService\QuotationService;
+use Envioskanguro\Shipping\WebService\TrackingService;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Event\ManagerInterface as EventManager;
 
-class SaveSalesOrder implements ObserverInterface
+class CreateOrderLabel implements ObserverInterface
 {
     /** 
      * Prefix Shipping Code
      */
     const PREFIX_SHIPPING_CODE = 'envioskanguro';
 
+    /**
+     * Status Config
+     */
+    const STATUS_CONFIG_PATH = 'carriers/envioskanguro/order_status_planned_to_ship';
+
     /** 
-     * @var Logger $logger
+     * @var Logger
      */
     protected $logger;
 
-    /**
-     * @var EventManager $eventManager
-     */
-    private $eventManager;
-
     /** 
-     * @var ScopeConfig $scopeConfig
+     * @var ScopeConfig
      */
     protected $scopeConfig;
-
-    /** 
-     * @var Actions $actions;
-     */
-    protected $actions;
 
     /**
      * @var TrackingService $trackingService
@@ -58,15 +51,11 @@ class SaveSalesOrder implements ObserverInterface
 
     public function __construct(
         Logger $logger,
-        Actions $actions,
-        EventManager $eventManager,
         ScopeConfigInterface $scopeConfig,
         TrackingService $trackingService,
         QuotationService $quotationService
     ) {
         $this->logger = $logger;
-        $this->actions = $actions;
-        $this->eventManager = $eventManager;
         $this->scopeConfig = $scopeConfig;
         $this->trackingService = $trackingService;
         $this->quotationService = $quotationService;
@@ -80,13 +69,12 @@ class SaveSalesOrder implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
-        $shippingMethod = $order->getShippingMethod();
 
-        if (strstr($shippingMethod, self::PREFIX_SHIPPING_CODE)) {
-            $this->quotationService->setSelectedQuotation($order);
+        $this->logger->debug('Process Order: ' . $order->getId());
+        $rate = $this->quotationService->authorizeQuotation($order);
 
-            $this->actions->execute($order);
-        }
+        $this->logger->debug('Download Tracking: ' . $rate->getTrackingNumber());
+        $this->trackingService->downloadTracking($rate->getTrackingNumber());
 
         return $this;
     }

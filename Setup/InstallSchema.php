@@ -50,7 +50,7 @@ class InstallSchema implements InstallSchemaInterface
                         'nullable' => false,
                         'unsigned' => true,
                     ],
-                    'Quote ID'
+                    'Envios Kanguro Quote ID'
                 )
                 ->addColumn(
                     'session_id',
@@ -60,29 +60,56 @@ class InstallSchema implements InstallSchemaInterface
                         'nullable' => false,
                         'unsigned' => true,
                     ],
-                    'Card ID'
+                    'Cart ID'
                 )
                 ->addColumn(
                     'content',
                     Table::TYPE_TEXT,
                     '64k',
                     [],
-                    'Rate Serializer'
+                    'Rates Serializer'
+                )
+                ->addColumn(
+                    'shipping_code',
+                    Table::TYPE_TEXT,
+                    100,
+                    [],
+                    'Selected Method'
+                )
+                ->addColumn(
+                    'order',
+                    Table::TYPE_TEXT,
+                    100,
+                    [],
+                    'Order Increment ID'
+                )
+                ->addColumn(
+                    'tracking_number',
+                    Table::TYPE_TEXT,
+                    255,
+                    [],
+                    'Tracking Number'
                 )
                 ->addColumn(
                     'created_at',
                     Table::TYPE_TIMESTAMP,
                     null,
-                    ['nullable' => false, 'default' => Table::TIMESTAMP_INIT],
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT
+                    ],
                     'Created At'
                 )->addColumn(
                     'updated_at',
                     Table::TYPE_TIMESTAMP,
                     null,
-                    ['nullable' => false, 'default' => Table::TIMESTAMP_INIT_UPDATE],
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT_UPDATE
+                    ],
                     'Updated At'
                 )
-                ->setComment('Post Table');
+                ->setComment('Envios Kanguro Shipping Table');
             $installer->getConnection()->createTable($table);
 
             $installer->getConnection()->addIndex(

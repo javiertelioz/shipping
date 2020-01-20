@@ -1,7 +1,7 @@
 {
   "name": "envioskanguro/shipping",
   "description": "Envios kanguro shipping extension for Magento 2",
-  "version": "1.0.14",
+  "version": "1.0.0",
   "type": "magento2-module",
   "license": "MIT",
   "authors": [
@@ -17,7 +17,7 @@
     "ext-iconv": "*",
     "ext-intl": "*",
     "ext-json": "*",
-    "javiertelioz/sdk-envioskanguro": "^1.0.0",
+    "javiertelioz/sdk-envioskanguro": "^1.0.1",
     "magento/module-directory": "100.*",
     "magento/framework": "^102.0.0",
     "magento/module-backend": "^101.0.0",
