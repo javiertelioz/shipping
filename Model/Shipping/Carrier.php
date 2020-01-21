@@ -138,6 +138,17 @@ class Carrier extends AbstractCarrier implements CarrierInterface
      */
     public function collectRates(RateRequest $request)
     {
+        if (empty($request->getDestPostcode())) {
+            $error = $this->_rateErrorFactory->create();
+            $error->setCarrier($this->_code);
+            $error->setCarrierTitle($this->getConfigData('title'));
+            $error->setErrorMessage(
+                __('We are sorry, but we cannot estimate the shipping price without the postal code.')
+            );
+
+            return $error;
+        }
+
         /** @var Result $result */
         $result = $this->_rateResultFactory->create();
 
@@ -223,7 +234,6 @@ class Carrier extends AbstractCarrier implements CarrierInterface
 
             $tracking->setCarrierTitle($carrierTitle);
             $tracking->setUrl($trackingUrl);
-            
         } catch (LocalizedException $exception) {
             $this->messageManager->addErrorMessage($exception->getMessage());
 
