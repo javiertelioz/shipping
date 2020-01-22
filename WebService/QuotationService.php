@@ -13,6 +13,7 @@ use Envioskanguro\Shipping\WebService\Api\Api;
 use Envioskanguro\Shipping\Plugin\Logger\Logger;
 use Envioskanguro\Shipping\WebService\RateRequest\Storage;
 
+use Magento\Sales\Model\Order;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class QuotationService
@@ -62,9 +63,10 @@ class QuotationService
     /**
      * Accept Quote purposes.
      * 
-     * @param string $order
+     * @param Order $order
+     * @return void
      */
-    public function setSelectedQuotation($order)
+    public function setSelectedQuotation(Order $order)
     {
         $data = [
             'order' => $order->getIncrementId(),
@@ -80,7 +82,8 @@ class QuotationService
     /**
      * Authorize the selected quote
      * 
-     * @param string $order
+     * @param Order $order
+     * @return mixed 
      */
     public function authorizeQuotation($order)
     {
@@ -93,7 +96,6 @@ class QuotationService
             if ($statuscode === $configOrderStatus) {
                 $rate = $this->storage->getRateByCurrentQuote($order->getQuoteId());
                 $selected = $this->getSelectRate($shippingMethod, $rate);
-
 
                 if (!is_null($rate->getTrackingNumber())) {
                     return $rate;
@@ -124,6 +126,9 @@ class QuotationService
 
     /** 
      * Get Shipping Method
+     * 
+     * @param string $shippingMethod
+     * @return string 
      */
     protected function getShippingCode($shippingMethod)
     {
@@ -132,7 +137,11 @@ class QuotationService
     }
 
     /** 
-     * Get Select Rate
+     * Get customer selected rate
+     * 
+     * @param string $shippingMethod
+     * @param Object $rate
+     * @return array
      */
     protected function getSelectRate($shippingMethod, $rate)
     {

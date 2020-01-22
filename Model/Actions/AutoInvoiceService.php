@@ -73,6 +73,8 @@ class AutoInvoiceService
      */
     public function execute(Order $order)
     {
+        $this->quotationService->authorizeQuotation($order);
+
         $autoInvoice = $this->scopeConfig->getValue(self::AUTO_GENERATE_INVOICE_PATH);
 
         if (!$autoInvoice) {
@@ -83,11 +85,11 @@ class AutoInvoiceService
 
         try {
             if (!$order->canInvoice()) {
-                return null;
+                return;
             }
 
             $invoice = $this->invoiceService->prepareInvoice($order);
-            $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
+            $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
             $invoice->register();
 
             $transaction = $this->transactionFactory->create()
@@ -96,15 +98,15 @@ class AutoInvoiceService
 
             $transaction->save();
 
-            $order->setState(Order::STATE_PROCESSING)
-                ->setStatus(Order::STATE_PROCESSING);
+            if ($order->getState() !== Order::STATE_PROCESSING) {
+                $order->setState(Order::STATE_PROCESSING)
+                    ->setStatus(Order::STATE_PROCESSING);
+            }
 
             $order->addStatusHistoryComment('Auto Invoice (Envios Kanguro)', false)
                 ->setIsCustomerNotified(false);
 
             $order->save();
-
-            $this->quotationService->authorizeQuotation($order);
         } catch (\Exception $e) {
             $this->logger->debug('Invoice Error: ' . __($e->getMessage()));
             throw new LocalizedException(__($e->getMessage()));

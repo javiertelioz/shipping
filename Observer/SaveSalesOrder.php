@@ -74,6 +74,7 @@ class SaveSalesOrder implements ObserverInterface
 
     /**
      * Execute Observer
+     * Save the shipping method selected by the customer
      * 
      * @param Observer $observer
      */

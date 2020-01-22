@@ -9,6 +9,10 @@
 
 namespace Envioskanguro\Shipping\Controller\Webhook;
 
+use Envioskanguro\Shipping\Plugin\Logger\Logger;
+use Envioskanguro\Shipping\WebService\TrackingService;
+use Envioskanguro\Shipping\Model\Actions\OrderActions;
+
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 
@@ -18,8 +22,6 @@ use Magento\Framework\App\Request\InvalidRequestException;
 
 use Magento\Framework\Controller\Result\JsonFactory;
 
-use Envioskanguro\Shipping\Plugin\Logger\Logger;
-use Envioskanguro\Shipping\WebService\TrackingService;
 
 class Index extends Action implements CsrfAwareActionInterface
 {
@@ -39,15 +41,23 @@ class Index extends Action implements CsrfAwareActionInterface
      */
     protected $jsonResultFactory;
 
+    /**
+     * @var OrderActions $orderActions
+     */
+    protected $orderActions;
+
     public function __construct(
         Logger $logger,
         Context $context,
         TrackingService $trackingService,
-        JsonFactory $jsonResultFactory
+        JsonFactory $jsonResultFactory,
+        OrderActions $orderActions
     ) {
         $this->logger = $logger;
         $this->trackingService = $trackingService;
         $this->jsonResultFactory = $jsonResultFactory;
+        $this->orderActions = $orderActions;
+
         parent::__construct($context);
     }
 
@@ -67,14 +77,17 @@ class Index extends Action implements CsrfAwareActionInterface
         $result = $this->jsonResultFactory->create();
 
         if ($json = json_decode($json)) {
+            
+            $trackingNumber = $json->data->tracking_number;
+            
+            $this->logger->debug('Webhook Request: ' . var_export($json, true));            
+            $this->orderActions->executeByTrackingNumber($trackingNumber);
 
-            $this->logger->debug('Webhook Request: ' . var_export($json, true));
-
-            $this->trackingService->downloadTracking($json->data->tracking_number);
+            $this->trackingService->downloadTracking($trackingNumber);
 
             $data = [
                 'message' => 'success',
-                'tracking' => $json->data->tracking_number
+                'tracking' => $trackingNumber
             ];
 
             $result->setData($data);

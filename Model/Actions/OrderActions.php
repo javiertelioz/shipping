@@ -10,12 +10,14 @@
 namespace Envioskanguro\Shipping\Model\Actions;
 
 use Magento\Sales\Model\Order;
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Sales\Model\OrderFactory;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Envioskanguro\Shipping\Model\RateFactory;
 use Envioskanguro\Shipping\Plugin\Logger\Logger;
 use Envioskanguro\Shipping\WebService\TrackingService;
 use Envioskanguro\Shipping\WebService\QuotationService;
+use Envioskanguro\Shipping\WebService\RateRequest\Storage;
 use Envioskanguro\Shipping\Model\Actions\AutoInvoiceService;
 use Envioskanguro\Shipping\Model\Actions\AutoShipmentService;
 
@@ -35,6 +37,16 @@ class OrderActions
      * @var ScopeConfig
      */
     protected $scopeConfig;
+
+    /** 
+     * @var OrderFactory $orderFactory
+     */
+    protected $orderFactory;
+
+    /** 
+     * @var Storage $storage
+     */
+    protected $storage;
 
     /**
      * @var RateFactory $rateFactory
@@ -63,16 +75,20 @@ class OrderActions
 
     public function __construct(
         Logger $logger,
-        ScopeConfigInterface $scopeConfig,
+        Storage $storage,
         RateFactory $rateFactory,
+        OrderFactory $orderFactory,
         TrackingService $trackingService,
+        ScopeConfigInterface $scopeConfig,
         QuotationService $quotationService,
         AutoInvoiceService $autoInvoiceService,
         AutoShipmentService $autoShipmentService
     ) {
         $this->logger = $logger;
-        $this->scopeConfig = $scopeConfig;
+        $this->storage = $storage;
         $this->rateFactory = $rateFactory;
+        $this->orderFactory = $orderFactory;
+        $this->scopeConfig = $scopeConfig;
         $this->trackingService = $trackingService;
         $this->quotationService = $quotationService;
         $this->autoInvoiceService = $autoInvoiceService;
@@ -94,9 +110,28 @@ class OrderActions
             try {
                 $this->autoInvoiceService->execute($order);
                 $this->autoShipmentService->execute($order);
+
             } catch (\Throwable $e) {
                 $this->logger->debug('Auto Actions Error: ' . $e->getMessage());
             }
+        }
+    }
+
+    /**
+     * Load and Execute Actions
+     */
+    public function executeByTrackingNumber($trackingNumber)
+    {
+        $rate = $this->storage->getRateByTrackingNumber($trackingNumber);
+
+        $this->logger->debug($rate->getOrder());
+
+        try {
+            $order = $this->orderFactory->create()->loadByIncrementId($rate->getOrder());
+            $this->execute($order);
+
+        } catch (\Throwable $e) {
+            $this->logger->debug('Error: Order not found: ' . $rate->getOrder());
         }
     }
 }

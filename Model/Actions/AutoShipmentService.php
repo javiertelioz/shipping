@@ -10,6 +10,7 @@
 namespace Envioskanguro\Shipping\Model\Actions;
 
 use Envioskanguro\Shipping\Plugin\Logger\Logger;
+use Envioskanguro\Shipping\WebService\QuotationService;
 use Envioskanguro\Shipping\WebService\RateRequest\Storage;
 
 use Magento\Sales\Model\Order;
@@ -63,19 +64,26 @@ class AutoShipmentService
      */
     protected $shipmentNotifier;
 
+    /** 
+     * @var QuotationService $quotationService
+     */
+    protected $quotationService;
+
     public function __construct(
         Logger $logger,
         Storage $storage,
         ScopeConfigInterface $scopeConfig,
         TrackFactory $trackFactory,
         OrderConverte $converteService,
-        ShipmentNotifier $shipmentNotifier
+        ShipmentNotifier $shipmentNotifier,
+        QuotationService $quotationService
     ) {
         $this->logger = $logger;
         $this->storage = $storage;
         $this->scopeConfig = $scopeConfig;
         $this->trackFactory = $trackFactory;
         $this->converteService = $converteService;
+        $this->quotationService = $quotationService;
         $this->shipmentNotifier = $shipmentNotifier;
     }
 
@@ -87,16 +95,23 @@ class AutoShipmentService
      */
     public function execute(Order $order)
     {
+        $this->quotationService->authorizeQuotation($order);
+
         $autoShipment = $this->scopeConfig->getValue(self::AUTO_GENERATE_SHIPMENT_PATH);
 
         if (!$autoShipment) {
             return;
         }
 
+        if (empty($this->getTrackingNumber($order))) {
+            return;
+        }
+
+        $this->logger->debug('Create Shipment');
+
         try {
-            $this->logger->debug('Create Shipment');
             if (!$order->canShip()) {
-                return null;
+                return;
             }
             $shipment = $this->converteService->toShipment($order);
 
