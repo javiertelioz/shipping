@@ -13,26 +13,34 @@ use Magento\Framework\Exception\LocalizedException;
 
 use Magento\Checkout\Model\Session;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Extractor
 {
     /** 
-     * @var ScopeInterface
+     * @var ScopeInterface $scopeConfig 
      */
     protected $scopeConfig;
 
     /** 
-     * @var Session
+     * @var Session $checkoutSession
      */
     protected $checkoutSession;
 
+    /** 
+     * @var StoreManagerInterface $storeManager
+     */
+    protected $storeManager;
+
     public function __construct(
         Session $checkoutSession,
-        ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->checkoutSession = $checkoutSession;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -56,10 +64,11 @@ class Extractor
         }
 
         return [
-            'identifier'    => '#' . $this->getIdentifier(),
+            'identifier'    => $this->getIdentifier(),
+            'currency'      => $this->getCurrency(),
             'origin'        => $this->getShippingOrigin(),
             'destination'   => $this->getShippingDestination(),
-            'items'         => $this->getItems()
+            'items'         => $this->getItems(),
         ];
     }
 
@@ -68,9 +77,14 @@ class Extractor
      */
     public function getIdentifier()
     {
-        return uniqid();
+        return '#' . uniqid();
     }
 
+    public function getCurrency()
+    {
+        return $this->storeManager->getStore()
+            ->getCurrentCurrency()->getCode();
+    }
     /**
      * Normalize rate request items. In rare cases they are not set at all.
      *

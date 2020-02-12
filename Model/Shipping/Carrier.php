@@ -125,6 +125,10 @@ class Carrier extends AbstractCarrier implements CarrierInterface
         );
         $rates = unserialize($quote->getContent());
 
+        if (empty($rates)) {
+            return $methods;
+        }
+
         foreach ($rates as $rate) {
             $methods[$rate['code']] = $rate['name'];
         }
